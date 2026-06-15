@@ -806,7 +806,7 @@ void main_loop()
                 md = 0;
                 /**/ if(event.mgesture.dDist < 0){zoom += 0.09f * zoom;}
                 else if(event.mgesture.dDist > 0){zoom -= 0.09f * zoom;}
-                if(zoom > -0.33f){zoom = -0.33f;}else if(zoom < -3.f){zoom = -3.f;}
+                if(zoom > -0.33f){zoom = -0.33f;}else if(zoom < -6.f){zoom = -6.f;}
             }
         }
         else if(event.type == SDL_FINGERDOWN)
