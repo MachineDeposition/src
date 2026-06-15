@@ -740,7 +740,7 @@ void playEndAudio()
         if(!window.voiceAudio){window.voiceAudio = new Audio();}
         window.audiolen = undefined;
         var audio = window.voiceAudio;
-        audio.src = '/end.mp3';
+        audio.src = 'end.mp3';
         audio.load();
         audio.addEventListener('canplaythrough', function(){window.audiolen = audio.duration;},{once: true});
         audio.play().catch(function(err){window.audiofailed=true;console.error("Audio play failed:", err);});
@@ -762,7 +762,7 @@ void playNextAudio()
         if(!window.voiceAudio){window.voiceAudio = new Audio();}
         window.audiolen = undefined;
         var audio = window.voiceAudio;
-        audio.src = '/track' + vtrack + '/v' + vhead + '.mp3';
+        audio.src = 'track' + vtrack + '/v' + vhead + '.mp3';
         audio.load();
         audio.addEventListener('canplaythrough', function(){window.audiolen = audio.duration;},{once: true});
         audio.play().catch(function(err){window.audiofailed=true;console.error("Audio play failed:", err);});
