@@ -737,8 +737,7 @@ void addChat(const uint i, const char* msg)
 void playEndAudio()
 {
     EM_ASM({
-        window.voiceAudio = new Audio();
-        //if(!window.voiceAudio){window.voiceAudio = new Audio();}
+        if(!window.voiceAudio){window.voiceAudio = new Audio();}
         window.audiolen = undefined;
         var audio = window.voiceAudio;
         audio.src = '/end.mp3';
@@ -760,8 +759,7 @@ void playNextAudio()
     EM_ASM({
         var vhead = $0;
         var vtrack = $1;
-        window.voiceAudio = new Audio();
-        //if(!window.voiceAudio){window.voiceAudio = new Audio();}
+        if(!window.voiceAudio){window.voiceAudio = new Audio();}
         window.audiolen = undefined;
         var audio = window.voiceAudio;
         audio.src = '/track' + vtrack + '/v' + vhead + '.mp3';
