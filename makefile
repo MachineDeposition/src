@@ -14,10 +14,27 @@ ptf:
 	cc dev/ptf.c -lm -Ofast -march=native -o dev/ptf
 
 wasm:
-	source ~/emsdk/emsdk_env.sh && emcc main.c -DWEB -O3 --closure 1 -s FILESYSTEM=0 -s ASYNCIFY -s USE_SDL=2 -s ENVIRONMENT=web -s TOTAL_MEMORY=64MB -o web/index.html --shell-file t.html && emrun web/index.html
+	source ~/emsdk/emsdk_env.sh && emcc main.c -DWEB -O3 --closure 1 \
+		-s USE_SDL=2 \
+		-s FILESYSTEM=0 \
+		-s ENVIRONMENT=web \
+		-s ABORTING_MALLOC=0 \
+		-s NO_EXIT_RUNTIME=1 \
+		-s TOTAL_MEMORY=1MB \
+		-o web/index.html --shell-file t.html && emrun web/index.html
 
 js:
-	source ~/emsdk/emsdk_env.sh && emcc main.c -DWEB -O3 -s MINIFY_HTML=0 --closure 1 -s WASM=0 -s FILESYSTEM=0 -s ASYNCIFY -s USE_SDL=2 -s ENVIRONMENT=web -s TOTAL_MEMORY=64MB -o web/index.html --shell-file t.html && emrun web/index.html
+	source ~/emsdk/emsdk_env.sh && emcc main.c -DWEB -O3 --closure 1 \
+		-s MINIFY_HTML=0 \
+		-s WASM=0 \
+		-s USE_SDL=2 \
+		-s FILESYSTEM=0 \
+		-s LEGACY_VM_SUPPORT=1 \
+		-s ABORTING_MALLOC=0 \
+		-s NO_EXIT_RUNTIME=1 \
+		-s ENVIRONMENT=web \
+		-s TOTAL_MEMORY=1MB \
+		-o web/index.html --shell-file t.html && emrun web/index.html
 
 run:
 	source ~/emsdk/emsdk_env.sh && emrun web/index.html
