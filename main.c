@@ -662,12 +662,10 @@ float aspect=0.f, t=0.f, lt=0.f, dt=0.f;
 int mx=0, my=0, lx=0, ly=0, md=0;
 uint istouch = 0;
 float sens = 0.003f;
-float msens = 0.001f;
 float xrot = d2PI;
 float yrot = 1.1f;
 float dzoom = -7.6f;
 float zoom = -5.8f;
-float cx=0.f, cy=0.f;
 
 // sim vars
 uint talking = 0, started=0, sigend=0;
