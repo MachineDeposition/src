@@ -230,6 +230,52 @@ void mRotZ(mat *r, const float radians)
                     0.f, 0.f, 0.f, 1.f };
     mMul(r, &t, r);
 }
+void mRotate(mat *r, const float radians, float x, float y, float z)
+{// Dan Ginsburg, Budirijanto Purnomo, Dave Shreiner, Aaftab Munshi
+    const float mag = 1.f/sqrtf(x * x + y * y + z * z);
+    const float sinAngle = sinf(radians);
+    const float cosAngle = cosf(radians);
+    if(mag > 0.0f)
+    {
+        x *= mag;
+        y *= mag;
+        z *= mag;
+
+        const float xx = x * x;
+        const float yy = y * y;
+        const float zz = z * z;
+        const float xy = x * y;
+        const float yz = y * z;
+        const float zx = z * x;
+        const float xs = x * sinAngle;
+        const float ys = y * sinAngle;
+        const float zs = z * sinAngle;
+        const float oneMinusCos = 1.0f - cosAngle;
+
+        mat rotMat;
+        rotMat.m[0][0] = (oneMinusCos * xx) + cosAngle;
+        rotMat.m[0][1] = (oneMinusCos * xy) - zs;
+        rotMat.m[0][2] = (oneMinusCos * zx) + ys;
+        rotMat.m[0][3] = 0.0F; 
+
+        rotMat.m[1][0] = (oneMinusCos * xy) + zs;
+        rotMat.m[1][1] = (oneMinusCos * yy) + cosAngle;
+        rotMat.m[1][2] = (oneMinusCos * yz) - xs;
+        rotMat.m[1][3] = 0.0F;
+
+        rotMat.m[2][0] = (oneMinusCos * zx) - ys;
+        rotMat.m[2][1] = (oneMinusCos * yz) + xs;
+        rotMat.m[2][2] = (oneMinusCos * zz) + cosAngle;
+        rotMat.m[2][3] = 0.0F; 
+
+        rotMat.m[3][0] = 0.0F;
+        rotMat.m[3][1] = 0.0F;
+        rotMat.m[3][2] = 0.0F;
+        rotMat.m[3][3] = 1.0F;
+
+        mMul(r, &rotMat, r);
+    }
+}
 mat projection, view, model;
 #define setModel() glUniformMatrix4fv(model_id,1,GL_FALSE,(float*)&model.m[0][0])
 #define setView() glUniformMatrix4fv(view_id,1,GL_FALSE,(float*)&view.m[0][0])
@@ -662,10 +708,10 @@ float aspect=0.f, t=0.f, lt=0.f, dt=0.f;
 int mx=0, my=0, lx=0, ly=0, md=0;
 uint istouch = 0;
 float sens = 0.003f;
-float xrot = d2PI;
-float yrot = 1.1f;
+float xrot = 1.3968f;
+float yrot = 1.594f;
 float dzoom = -7.6f;
-float zoom = -5.8f;
+float zoom = -2.70549f;
 
 // sim vars
 uint talking = 0, started=0, sigend=0;
@@ -702,8 +748,13 @@ EM_BOOL emscripten_mousemove_event(int eventType, const EmscriptenMouseEvent *mo
 #endif
 void posRend(const float x, const float y, const float z)
 {
+    //glUniform3f(color_id, 0.f, 0.43137f, 0.51373f);
+    //glUniform3f(color_id, 0.1+fabsf(sinf(t*x*y*z*0.13f))*0.1f, 0.1+fabsf(sinf(t*x*y*z*0.13f))*0.1f, 0.1f+fabsf(sinf(t*x*y*z*0.13f))*0.1f);
+    //glUniform3f(color_id, 0.4+fabsf(cosf(t*x*y*z*0.13f))*0.3f, 0.4+fabsf(sinf(t*x*y*z*0.13f))*0.3f, 0.5f+fabsf(sinf(t*x*y*z*0.13f))*0.3f);
     const float cm = sqrtf(x*x+y*y+z*z);
+    //const float cm = x*y*z;
     glUniform3f(color_id, 0.f, 0.4+fabsf(sinf(t*cm*0.13f))*0.2f, 0.5f+fabsf(sinf(t*cm*0.13f))*0.2f);
+    //glUniform3f(color_id, 0.1+fabsf(cosf(t*cm*0.13f))*0.1f, 0.1+fabsf(sinf(t*cm*0.13f))*0.1f, 0.1f+fabsf(sinf(t*cm*0.13f))*0.1f);
     mSetPos(&model, (vec){x,y,z});
     setModel();
     esRenderModel();
@@ -734,6 +785,16 @@ void addChat(const uint i, const char* msg)
 }
 void playEndAudio()
 {
+    // EM_ASM({
+    //     window.voiceAudio = new Audio();
+    //     window.audiolen = undefined;
+    //     var audio = window.voiceAudio;
+    //     audio.src = '/end.mp3';
+    //     audio.load();
+    //     audio.addEventListener('canplaythrough', function(){window.audiolen = audio.duration;},{once: true});
+    //     audio.play().catch(function(err){window.audiofailed=true;console.error("Audio play failed:", err);});
+    //     audio.onerror = function(){window.audiofailed=true;console.error("Audio load error:", audio.error);};
+    // });
     EM_ASM({
         if(!window.voiceAudio){window.voiceAudio = new Audio();}
         window.audiolen = undefined;
@@ -754,6 +815,18 @@ void playNextAudio()
     if(track == 1){addChat(current_talker, track1[head]);}else{addChat(current_talker, track2[head]);}
 
     // play audio / do talking
+    // EM_ASM({
+    //     var vhead = $0;
+    //     var vtrack = $1;
+    //     window.voiceAudio = new Audio();
+    //     window.audiolen = undefined;
+    //     var audio = window.voiceAudio;
+    //     audio.src = '/track' + vtrack + '/v' + vhead + '.mp3';
+    //     audio.load();
+    //     audio.addEventListener('canplaythrough', function(){window.audiolen = audio.duration;},{once: true});
+    //     audio.play().catch(function(err){window.audiofailed=true;console.error("Audio play failed:", err);});
+    //     audio.onerror = function(){window.audiofailed=true;console.error("Audio load error:", audio.error);};
+    // }, head, track);
     EM_ASM({
         var vhead = $0;
         var vtrack = $1;
@@ -763,19 +836,19 @@ void playNextAudio()
         audio.src = 'track' + vtrack + '/v' + vhead + '.mp3';
         audio.load();
         audio.addEventListener('canplaythrough', function(){window.audiolen = audio.duration;},{once: true});
-        audio.play().catch(function(err){window.audiofailed=true;console.error("Audio play failed:", err);});
-        audio.onerror = function(){window.audiofailed=true;console.error("Audio load error:", audio.error);};
+        audio.play().catch(function(err){console.error("Audio play failed:", err);});
+        audio.onerror = function(){console.error("Audio load error:", audio.error);};
     }, head, track);
 
     // start the character talking
     talking = 1+current_talker;
 
     // increment the head
-    if(get_audiofailed() == 0)
-    {
+    //if(get_audiofailed() == 0)
+    //{
         head++;
         if(head >= max_head){sigend = 1;}
-    }
+    //}
 
     // flip talker
     current_talker = 1 - current_talker;
@@ -842,6 +915,13 @@ void main_loop()
             else if(event.button.button == SDL_BUTTON_MIDDLE){md = 0;}
         }
 #ifndef WEB // no effect in browsers
+        else if(event.type == SDL_KEYDOWN) // debug
+        {
+            const SDL_Keycode key = event.key.keysym.sym;
+            /**/ if(key == SDLK_1){end = t+3.f;}
+            else if(key == SDLK_2){track = 2;}
+            else if(key == SDLK_q){printf("%g %g %g\n", xrot, yrot, dzoom);}
+        }
         else if(event.type == SDL_MOUSEMOTION)
         {
             mx = event.motion.x, my = event.motion.y;
@@ -948,6 +1028,7 @@ void main_loop()
     // render world
     glUniform1f(ambient_id, 0.7f);
     glUniform1f(dapple_id, 0.f);
+    //glUniform3f(color_id, 0.f, 0.43137f, 0.51373f);
 
     esBindModel(9);
     posRend(-0.720441f, -2.75704f, -0.631258f);
@@ -1006,6 +1087,10 @@ void main_loop()
     posRend(-2.26435f, 1.80506f, 0.848173f);
 
     mIdent(&model);
+    // mSetRotZ(&model, d2PI);
+    // mScale(&model, 1.f, 1.f, -1.f);
+    // mRotate(&model, d2PI, 0.f, 0.f, 1.f);
+    // mRotate(&model, PI, 0.f, 1.f, 0.f);
     mSetRotZ(&model, d2PI);
     mRotX(&model, PI);
     posRend(-2.26435f, -0.00313118f, -1.1244f);
@@ -1126,6 +1211,7 @@ void main_loop()
     glUniform1f(dapple_id, 0.1f);
     glUniform3f(color_id, 0.1f, 0.1f, 0.1f);
     posRend2(19, -0.0203434f, -1.57364f, -0.146639f);
+    //glUniform3f(color_id, 0.7f+(sinf(t)*0.3f), 0.f, 0.f);
     float speed = 0.8f;
     if(talking == 2){speed = 5.f;}
     if(speed > 1.f)
@@ -1141,6 +1227,7 @@ void main_loop()
         glUniform1f(face_id, fabsf((sinf(t*0.942f*speed)*-sinf(t*0.73f*speed)*-sinf(t*0.56f*speed)+sinf(t*0.13f*speed))*0.5f));
     }
     posRend2(20, -0.0203434f, -1.57364f, -0.146639f);
+    
     glUniform1f(face_id, 0.f);
     glUniform1f(dapple_id, 0.f);
     glUniform1f(ambient_id, 1.f);
@@ -1163,6 +1250,7 @@ void main_loop()
         glUniform3f(color_id, 1.f, 0.f, 0.f);
         mSetRotY(&model, -0.291662f);
         if(talking == 1){mScale(&model, 1.f, 1.f, 0.4f+fabsf(sinf(t*3.6f)*0.7f));} // talk
+        //if(talking == 1){mScale(&model, 1.f, 1.f, 0.4f+fabsf((sinf(t*3.6f)*sinf(t*2.6f)*sinf(t*1.6f))*0.7f));} // talk
         posRend2(18, -0.00585127f, 1.23034f, -0.47235f);
     }
     else if(t < end)
@@ -1195,7 +1283,7 @@ void main_loop()
     glEnable(GL_BLEND);
 
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glUniform1f(opacity_id, 0.8f);
+        glUniform1f(opacity_id, 0.8f); // +(sinf(t*0.7f)*0.2f)
 
         esBindModel(2); // faces
         posRend(-1.65782f, 1.42114f, -1.27949f);
@@ -1298,6 +1386,10 @@ void main_loop()
             posRend2(17, -0.00894034f, 1.36916f, -0.65623f);
             glUniform3f(color_id, 1.000000f, 0.356400f, 0.982251f);
             posRend2(24, -0.00894034f, 1.36916f, -0.65623f);
+            //glUniform3f(color_id, 1.f, 1.f, 1.f);
+            //posRend2(25, -0.00894034f, 1.36916f, -0.65623f);
+            //glUniform3f(color_id, 0.f, 0.f, 0.f);
+            //posRend2(26, -0.00894034f, 1.36916f, -0.65623f);
         }
 
         // laser
@@ -1342,6 +1434,8 @@ void main_loop()
         glUniform1f(opacity_id, 0.9f);
 
         // table
+        //glUniform3f(color_id, 0.f, 0.43137f, 0.51373f);
+        //glUniform3f(color_id, 0.f, 0.5f, 0.6);
         mIdent(&model);
         esBindModel(15);
         posRend(-0.0140077f, -0.145959f, -1.14043f +(((sinf(t*d2PI)+sinf(-t+d2PI))*0.5f)*0.01f));
@@ -1361,12 +1455,15 @@ void main_loop()
 
         // holo
         glUniform3f(color_id, 0.4+fabsf(cosf(t*0.7f))*0.2f, fabsf(sinf(t*0.2f))*0.1f, 0.5f+fabsf(sinf(t*0.4f))*0.2f);
+        //glUniform3f(color_id, 0.43137f, 0.f, 0.51373f);
         glUniform1f(dapple_id, 0.1f);
         mIdent(&model);
         posRend2(0, -0.0140076f, -1.59251f, -1.19596f);
         
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
+
+    //
 
     // swap buffer
     SDL_GL_SwapWindow(wnd);
@@ -1455,6 +1552,7 @@ int main(int argc, char** argv)
 #ifdef WEB
     srand(time(0));
     if(rand() > RAND_MAX/2){track=2;max_head=142;}
+    //if(rand() > RAND_MAX-(RAND_MAX/3)){track=2;max_head=143;}
     emscripten_run_script("document.getElementById('load').style.display='none'");
     emscripten_set_resize_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, EM_FALSE, emscripten_resize_event);
     emscripten_set_mousemove_callback(EMSCRIPTEN_EVENT_TARGET_WINDOW, NULL, EM_FALSE, emscripten_mousemove_event);
