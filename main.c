@@ -668,7 +668,7 @@ float dzoom = -7.6f;
 float zoom = -2.70549f;
 
 // sim vars
-uint talking = 0, started=0, sigend=0;
+uint talking = 0, started=0, sigend=0, ending=0;
 float end = 0.f;
 
 // archive head
@@ -738,6 +738,7 @@ void playEndAudio()
     EM_ASM({
         if(!window.voiceAudio){window.voiceAudio = new Audio();}
         window.audiolen = undefined;
+        window.audiofailed = false;
         var audio = window.voiceAudio;
         audio.src = 'end.mp3';
         audio.load();
@@ -865,10 +866,23 @@ void main_loop()
 
 #ifdef WEB
     // check for new speech
+    // every frame: animation starts on the tick the ending sound is heard
+    if(started == 1 && end == 0.f && ending == 1 && is_audio_playing() == 1)
+    {
+        end = t+3.f;
+    }
     if(started == 1 && end == 0.f && t > nnt)
     {
-        // not waiting on audio to load?
-        if(t > nwait)
+        // ending sound requested, but not playing yet
+        if(ending == 1)
+        {
+            if(t > nwait)
+            {
+                playEndAudio();
+                nwait = t+3.f;
+            }
+        }
+        else if(t > nwait) // not waiting on audio to load?
         {
             // reset
             talking = 0;
@@ -885,7 +899,8 @@ void main_loop()
                 if(sigend == 1)
                 {
                     playEndAudio();
-                    end = t+3.f;
+                    ending = 1;
+                    nwait = t+3.f;
                 }
                 else{playNextAudio();}
             }
