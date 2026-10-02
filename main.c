@@ -673,6 +673,7 @@ float end = 0.f;
 
 // archive head
 uint head = 0, max_head = 112, current_talker=0, track=1;
+uint chatted = 0, chat_i = 0, chat_who = 0;
 float nwait = 0.f, nnt = 0.f;
 
 //*************************************
@@ -749,9 +750,9 @@ void playNextAudio()
 {
     // let's go
     nwait = t+3.f; // set how long we are willing to wait for audio to load
-
-    // update the html chatlog
-    if(track == 1){addChat(current_talker, track1[head]);}else{addChat(current_talker, track2[head]);}
+    chatted = 0;
+    chat_i = head;
+    chat_who = current_talker;
 
     // play audio / do talking
     EM_ASM({
@@ -759,6 +760,7 @@ void playNextAudio()
         var vtrack = $1;
         if(!window.voiceAudio){window.voiceAudio = new Audio();}
         window.audiolen = undefined;
+        window.audiofailed = false;
         var audio = window.voiceAudio;
         audio.src = 'track' + vtrack + '/v' + vhead + '.mp3';
         audio.load();
@@ -771,11 +773,8 @@ void playNextAudio()
     talking = 1+current_talker;
 
     // increment the head
-    if(get_audiofailed() == 0)
-    {
-        head++;
-        if(head >= max_head){sigend = 1;}
-    }
+    head++;
+    if(head >= max_head){sigend = 1;}
 
     // flip talker
     current_talker = 1 - current_talker;
@@ -877,6 +876,12 @@ void main_loop()
             // check for new lines if no audio is currently playing
             if(is_audio_playing() == 0)
             {
+                if(get_audiofailed() == 1)
+                {
+                    if(head > 0){head--;}
+                    sigend = 0;
+                    current_talker = 1 - current_talker;
+                }
                 if(sigend == 1)
                 {
                     playEndAudio();
@@ -892,6 +897,14 @@ void main_loop()
             const float audio_len = get_audiolen();
             if(audio_len > 0.f)
             {
+                // update the html chatlog once, for the line this attempt started
+                if(!chatted)
+                {
+                    if(track == 1){addChat(chat_who, track1[chat_i]);}
+                    else{addChat(chat_who, track2[chat_i]);}
+                    chatted = 1;
+                }
+
                 // reset audio len (we know the audio is loaded now)
                 EM_ASM({window.audiolen = undefined;});
                 nwait = 0.f;
