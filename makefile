@@ -59,7 +59,7 @@ dbg:
 	$(name)_dbg
 
 grind:
-	valgrind --track-origins=yes --leak-check=full --leak-check=full ./$(name)_linux
+	valgrind --track-origins=yes --leak-check=full --track-origins=yes ./$(name)_linux
 
 clean:
 	rm -f $(name)_linux
